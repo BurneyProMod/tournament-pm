@@ -4,18 +4,18 @@ import sqlite3
 import csv
 from pathlib import Path
 
-DB_PATH = Path("tournament.db")
+DB_PATH = Path("../data/tournament.db").resolve()
 
 SCHEMA = """
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS player (
-  id                   INTEGER PRIMARY KEY AUTOINCREMENT,
-  name                 TEXT    NOT NULL UNIQUE,
-  elo                  INTEGER NOT NULL DEFAULT 1000,
-  matches_played       INTEGER NOT NULL DEFAULT 0,
-  tournaments_attended INTEGER NOT NULL DEFAULT 0,
-  created_at           TEXT    NOT NULL DEFAULT (datetime('now'))
+    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+    name                 TEXT    NOT NULL UNIQUE,
+    elo                  INTEGER NOT NULL DEFAULT 1000,
+    matches_played       INTEGER NOT NULL DEFAULT 0,
+    tournaments_attended INTEGER NOT NULL DEFAULT 0,
+    created_at           TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
 
@@ -107,12 +107,6 @@ def apply_delta(conn: sqlite3.Connection,
             (wins_a, wins_b, h2h_id)
         )
     conn.commit()
-
-# Seeding calculation
-def seed_players(conn: sqlite3.Connection, path: str = "test_users.txt") -> None:
-    p = Path(path)
-    if not p.exists():
-        return
 
     with p.open(newline="", encoding="utf-8") as f, conn:
         reader = csv.reader(f)
