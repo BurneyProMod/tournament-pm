@@ -8,6 +8,23 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: tournament
+          POSTGRES_PASSWORD: tournament
+          POSTGRES_DB: tournament
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tournament"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgresql+psycopg://tournament:tournament@localhost:5432/tournament
+      TEST_DATABASE_URL: postgresql+psycopg://tournament:tournament@localhost:5432/tournament_test
     steps:
       - uses: actions/checkout@v4
 
@@ -26,6 +43,11 @@ jobs:
 
       - name: Type check
         run: mypy
+
+      - name: Migrations match models
+        run: |
+          alembic upgrade head
+          alembic check
 
       - name: Test
         run: pytest

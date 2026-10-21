@@ -172,19 +172,23 @@ Effort is in focused working days. Each phase ends with a merged PR, so the git 
 - Add a GitHub Actions workflow that runs lint, type checks and tests on every push, and put the badge in the README.
 - From here on, work on branches and merge through PRs, even working alone. Reviewers read commit history.
 
-### Phase 1 — Domain logic, test-first (2–3 days)
+### Phase 1 — Domain logic, test-first (2–3 days) ✅ done 2026-10-21, branch `tourny-logic`
 - `elo.py`: flat delta (default 25, configurable), floor at 0, and a pluggable strategy so expected-score Elo can be added later.
 - `pairing.py`: round-1 high/low seeding, then Swiss pairing (same-score groups, move unpaired players down a group, avoid rematches, fair BYE rule).
 - `standings.py`: match points → Buchholz → head-to-head → Elo.
 - Tests: example-based tests plus **hypothesis** property tests for 2–64 players (everyone paired exactly once, no rematches while one can be avoided, at most one BYE per player).
 
-### Phase 2 — Schema, persistence and transactions (2–3 days)
+### Phase 2 — Schema, persistence and transactions (2–3 days) ✅ done 2026-10-21, branch `tourny-logic`
+
+_Scope trimmed for the portfolio goal (2026-10-21): editing pairings, explicit round open/close endpoints and the drop endpoint are deferred. Rounds are `open`/`closed` only; generating the next round closes the current one. Dropped players' forfeits are created automatically when a round is generated._
 - SQLAlchemy models plus the first Alembic migration for the schema above, with constraints in the DB, not only in Python.
 - Services, each one transaction: `create_tournament`, `add_entrant`, `generate_round`, `report_result`, `undo_result`, `close_round`.
 - `report_result` locks the match row (`FOR UPDATE`), checks its `version`, writes the ledger rows and updates `player.elo`, all or nothing.
 - Integration tests: a rollback test (inject a failure partway through and confirm nothing changed) and a concurrency test (two simultaneous reports, one gets 409).
 
-### Phase 3 — REST API and validation (2 days)
+### Phase 3 — REST API and validation (2 days) ✅ MVP done 2026-10-21, branch `mvp`
+
+_Done: player, tournament, entrant, start, round, result (report and undo) and standings endpoints; Pydantic request/response models; one error handler (404/409/422 with a stable `code`); OpenAPI docs list the error responses; an end-to-end API test plays a whole tournament. Deferred: rewriting `scripts/simulate.py` as an API client (the end-to-end test covers the smoke-test role)._
 - Routers, Pydantic schemas (name sanitizing and length limits, odd `best_of`, valid game scores), and a single exception handler that maps domain errors to 404, 409 or 422 with a consistent error body.
 - API tests covering the happy path and every error code for every endpoint.
 - Rewrite `scripts/simulate.py` as an **API client**. It doubles as an end-to-end smoke test in CI.
@@ -216,6 +220,12 @@ Effort is in focused working days. Each phase ends with a merged PR, so the git 
 - **Existing DB data:** thrown away; Postgres starts with a fresh schema.
 
 - **Forfeits:** Elo change 0 for both players. A forfeit win counts as a match win in the standings, and the dropped player still counts toward their opponents' Buchholz.
+- **Elo floor:** the winner always gains the full delta, even when the loser is clamped at 0, so ratings aren't strictly zero-sum near 0.
+- **BYE recipient:** the lowest-ranked player in the fairest tier. Active players without a BYE come first, then active players who already had one; dropped players only get one if no active player is left. Round 1 therefore gives it to the lowest seed.
+- **BYE fairness vs. rematches:** the BYE tier rule wins. Rematches are avoided only among BYE choices from that tier.
+- **Double forfeit** (two dropped players paired together): no winner, no points for either player.
+- **Head-to-head tiebreak:** wins (played or forfeit) against the players still tied on points and Buchholz. A cycle leaves them tied, and then Elo decides.
+- **Shared ranks:** players equal on every tiebreak share a rank (1, 1, 3).
 
 **Still open:**
 1. **Learning budget.** FastAPI, SQLAlchemy and Alembic are new tools. Is about 8–11 days realistic for your schedule, or should Phase 4's deployment wait?
