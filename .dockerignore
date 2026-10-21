@@ -1,0 +1,9 @@
+.git
+.venv
+legacy
+tests
+**/__pycache__
+.*_cache
+.coverage
+*.db
+*.log

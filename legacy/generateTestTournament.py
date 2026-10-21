@@ -3,8 +3,8 @@
 import random, string, datetime, sqlite3, sys
 from pathlib import Path
 
-import main
-from main import init_db, apply_delta
+
+from db_prototype import init_db, apply_delta
 
 conn = init_db()
 cur = conn.cursor()

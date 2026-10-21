@@ -19,3 +19,11 @@ ENV/
 .vscode/
 *.sw?
 *.swo
+# Tooling
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.env

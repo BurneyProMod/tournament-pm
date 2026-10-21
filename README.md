@@ -1,37 +1,59 @@
-Coding Project:
-Swiss Style Tournament System.
+# Tournament PM
 
-*Workflow*
-1. **Create Tournament**  
-   - **Enter Tournament Name**  
-   - **Add/Remove Players**  
-     - Checklist of current entries  
-     - **Add Entry** button at bottom  
-       - Name  
-       - Elo  
-   - **Set Games per Match**  
-     - Best of 1, 3, 5, etc
-     - - +/- menu  
-   - **Display First Set**  
-     - High/Low seeding by default  
-     - Edit player positions 
-     - Edit default Elo gain/loss  
-2. **Start Tournament**  
-   - **Select Match**  
-     - Adjust Elo gain/loss for that match  
-     - Select Winner  
-     - Submit result  
-   - Once all matches in Set 1 conclude, repeat **Start Tournament** for Set 2  
-3. **Display Results**
-   - **Display final bracket**
-    - Show +/- ELO after each match
+![CI](https://github.com/BurneyProMod/tournament-pm/actions/workflows/ci.yml/badge.svg)
 
-Requirements:
-Basic ELO system that has the ability to modify how much elo is gained/lost
-Save names and elo of players
-Ability to adjust how many rounds are played per match. (3 rounds = 1 match, a tournament is multiple matches)
-Players do not need to access this system, only the match admin.
+A REST API for running Swiss-style tournaments with Elo ratings. A match admin registers players, creates a tournament, generates pairings round by round, reports best-of-N results, and gets final standings, with every Elo change recorded.
 
-TODO: 
-Sanitize player names
-Add check so ELO cannot drop below 0
+**Stack:** Python 3.13 · FastAPI · PostgreSQL · SQLAlchemy 2 · Alembic · pytest · Docker · GitHub Actions
+
+> Status: Phase 0 (foundation) of [ROADMAP.md](ROADMAP.md). Domain logic, persistence and the full API are next.
+
+## Run it
+
+```bash
+docker compose up --build
+```
+
+The API is served at http://localhost:8000. Interactive docs are at http://localhost:8000/docs.
+
+## Develop
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pre-commit install
+```
+
+| Task | Command |
+|---|---|
+| Run the API with reload | `uvicorn tournament_pm.main:app --reload` |
+| Tests + coverage | `pytest` |
+| Lint / format | `ruff check .` · `ruff format .` |
+| Type check | `mypy` |
+
+CI runs the same checks on every push and pull request.
+
+## Project layout
+
+```
+src/tournament_pm/   application package
+tests/               pytest suite
+legacy/              original SQLite prototype (reference only)
+ROADMAP.md           audit, design (data model, REST surface), phased plan
+```
+
+## Requirements
+
+These come from the original project brief.
+
+**Admin workflow**
+1. **Create a tournament:** name it, add or remove players (name and Elo), set games per match (best of 1, 3, 5, …), review round 1 seeding (high/low), edit pairings and the default Elo gain/loss.
+2. **Run rounds:** for each match, optionally adjust its Elo gain/loss, record the winner and submit. When every match in a round is done, generate the next round.
+3. **Show results:** the final standings, with the ± Elo after each match.
+
+**Rules**
+- Basic Elo with an adjustable gain/loss; Elo can't go below 0.
+- Player names and Elo are saved between tournaments; names are sanitized.
+- The number of games per match is configurable.
+- Only the match admin uses the system; players don't need access.
